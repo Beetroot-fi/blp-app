@@ -30,7 +30,7 @@ export const HeaderConnectButton: React.FC<Props> = observer(({ store }) => {
      * @param wallet - Connected wallet instance or null
      */
     const handleStatusChange = async (wallet: Wallet | null): Promise<void> => {
-      if (wallet?.account.chain == TESTNET_CHAIN_ID) {
+      if (wallet?.account.chain !== TESTNET_CHAIN_ID) {
         await tonConnectUI.disconnect();
         console.log("testnet");
       } else {

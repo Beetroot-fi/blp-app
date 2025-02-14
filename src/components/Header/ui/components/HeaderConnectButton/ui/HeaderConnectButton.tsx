@@ -32,9 +32,9 @@ export const HeaderConnectButton: React.FC<Props> = observer(({ store }) => {
     const handleStatusChange = async (wallet: Wallet | null): Promise<void> => {
       if (wallet?.account.chain !== TESTNET_CHAIN_ID) {
         await tonConnectUI.disconnect();
-        console.log("testnet");
-      } else {
         console.log("mainnet");
+      } else {
+        console.log("testnet");
       }
     };
 

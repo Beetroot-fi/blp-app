@@ -2,17 +2,27 @@ import clsx from "clsx";
 import { useEffect, useState } from "react";
 import Btn from "../../../../../../components/Btn/Btn";
 import s from "./HomePageTop.module.scss";
+import { apiService } from "../../../../../../tonx";
+import { useTonWallet } from "@tonconnect/ui-react";
+import {
+  BLP_JETTON_MINTER,
+  TGBTC_JETTON_MINTER,
+} from "../../../../../../consts";
 
 export const HomePageTop = () => {
+  const wallet = useTonWallet();
   const [currentTabNum, setCurrentTabNum] = useState(1);
   const tabs = ["Withdraw", "Deposit"];
-  const balance = 0.260773;
+  const [tgBTCbalance, setTGBTCbalance] = useState<number>(0);
+  const [blpBalance, setBlpBalance] = useState<number>(0);
   const [inputValue, setInputValue] = useState<string | number>("");
   const [currentPercentOfBalance, setCurrentPercentOfBalance] = useState<
     undefined | number
   >(0);
 
-  const onInputChange = (e) => {
+  const balance = currentTabNum === 0 ? blpBalance : tgBTCbalance;
+
+  const onInputChange = (e: any) => {
     const { value } = e.target;
 
     if (value === "") setInputValue("");
@@ -22,11 +32,35 @@ export const HomePageTop = () => {
     if (isNaN(Number(value))) return;
 
     setInputValue(value);
-  }
+  };
 
   useEffect(() => {
-    setCurrentPercentOfBalance(Number(inputValue) / balance * 100);
-  }, [inputValue])
+    const fetchBalances = async () => {
+      try {
+        if (!wallet || !wallet.account?.address) {
+          return;
+        }
+
+        const address = wallet.account.address;
+
+        const [tgBTC, blp] = await Promise.all([
+          apiService.getJettonBalance(address, TGBTC_JETTON_MINTER),
+          apiService.getJettonBalance(address, BLP_JETTON_MINTER),
+        ]);
+
+        setTGBTCbalance(Number(tgBTC) / 1e8);
+        setBlpBalance(Number(blp) / 1e8);
+      } catch (error) {
+        console.error("Failed to fetch balances:", error);
+      }
+    };
+
+    fetchBalances();
+
+    if (balance) {
+      setCurrentPercentOfBalance((Number(inputValue) / balance) * 100);
+    }
+  }, [wallet, inputValue, currentTabNum]);
 
   return (
     <div className={s.wrapper}>

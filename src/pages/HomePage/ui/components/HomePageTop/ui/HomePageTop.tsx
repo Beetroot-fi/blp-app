@@ -25,10 +25,12 @@ export const HomePageTop = () => {
   }, [inputValue]);
 
   const errorText = useMemo(() => {
-    if (Number(inputValue) < 0.000001) return "the deposit must be more than 0.000002 TGBTC";
+    if (Number(inputValue) < 0.000001)
+      return "the deposit must be more than 0.000002 TGBTC";
 
-    if (Number(inputValue) < 0.000001) return "You need to have at least 1 USDT for deposit";
-  }, [inputValue])
+    if (Number(inputValue) < 0.000001)
+      return "You need to have at least 1 USDT for deposit";
+  }, [inputValue]);
 
   const balance = currentTabNum === 0 ? blpBalance : tgBTCbalance;
 

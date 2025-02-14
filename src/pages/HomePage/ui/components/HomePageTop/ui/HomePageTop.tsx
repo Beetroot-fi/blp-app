@@ -39,8 +39,6 @@ export const HomePageTop = () => {
 
     if (value === "") setInputValue("");
 
-    console.log(Number(value), isNaN(Number(value)));
-
     if (isNaN(Number(value))) return;
 
     setInputValue(value);
@@ -63,7 +61,7 @@ export const HomePageTop = () => {
         setTGBTCbalance(Number(tgBTC) / 1e8);
         setBlpBalance(Number(blp) / 1e8);
       } catch (error) {
-        console.error("Failed to fetch balances:", error);
+        throw error;
       }
     };
 

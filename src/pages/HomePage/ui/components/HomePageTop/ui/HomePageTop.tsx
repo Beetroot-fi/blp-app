@@ -1,6 +1,7 @@
 import clsx from "clsx";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Btn from "../../../../../../components/Btn/Btn";
+import { InfoIcon } from "../../../../../../components/Icons/InfoIcon";
 import s from "./HomePageTop.module.scss";
 import { apiService } from "../../../../../../tonx";
 import { useTonWallet } from "@tonconnect/ui-react";
@@ -19,6 +20,15 @@ export const HomePageTop = () => {
   const [currentPercentOfBalance, setCurrentPercentOfBalance] = useState<
     undefined | number
   >(0);
+  const error = useMemo(() => {
+    return inputValue !== "" && Number(inputValue) < 0.000002;
+  }, [inputValue]);
+
+  const errorText = useMemo(() => {
+    if (Number(inputValue) < 0.000001) return "the deposit must be more than 0.000002 TGBTC";
+
+    if (Number(inputValue) < 0.000001) return "You need to have at least 1 USDT for deposit";
+  }, [inputValue])
 
   const balance = currentTabNum === 0 ? blpBalance : tgBTCbalance;
 
@@ -77,8 +87,11 @@ export const HomePageTop = () => {
       <div className={s.block}>
         <div className={s.block_top}>
           <div className={s.token}>
-            <img src="./btc.png" alt="" />
-            <span>TGBTC</span>
+            <img
+              src={currentTabNum === 0 ? "./blp.png" : "./tgbtc.png"}
+              alt=""
+            />
+            <span>{currentTabNum === 0 ? "BLP" : "tgbtc"}</span>
           </div>
           <div className={s.balance}>
             BALANCE: <span>{balance}</span>
@@ -90,8 +103,15 @@ export const HomePageTop = () => {
             placeholder="0.000000"
             value={inputValue}
             onChange={onInputChange}
+            className={clsx(error && s.error)}
           />
         </div>
+        {error && (
+          <div className={s.error}>
+            <InfoIcon />
+            <span>{errorText}</span>
+          </div>
+        )}
         <div className={clsx(s.block_pult, currentTabNum === 1 && s.jcsb)}>
           {currentTabNum === 1 && (
             <div className={s.block_pult_text}>Swap fee: 1 USDT</div>
@@ -170,7 +190,7 @@ export const HomePageTop = () => {
         )}
       </div>
       <div className={s.btn}>
-        <Btn type="pink" className={s.btn}>
+        <Btn type="pink" className={s.btn} disabled={error}>
           Withdraw
         </Btn>
       </div>

@@ -105,8 +105,10 @@
         &_item {
             width: calc((100% - 12px) / 4);
             position: relative;
+            display: flex;
+            justify-content: flex-end;
 
-            &:last-child {
+            &:first-child {
                 width: 12px;
             }
 
@@ -135,11 +137,13 @@
                 border-radius: 50%;
                 background-color: #fff;
                 position: relative;
+                cursor: pointer;
+                user-select: none;
             }
 
             &_line {
                 position: absolute;
-                left: 12px;
+                right: 12px;
                 top: 50%;
                 transform: translateY(-50%);
                 width: calc(100% - 12px);

@@ -1,14 +1,14 @@
+import { useTonWallet } from "@tonconnect/ui-react";
 import clsx from "clsx";
 import { useEffect, useMemo, useState } from "react";
 import Btn from "../../../../../../components/Btn/Btn";
 import { InfoIcon } from "../../../../../../components/Icons/InfoIcon";
-import s from "./HomePageTop.module.scss";
-import { apiService } from "../../../../../../tonx";
-import { useTonWallet } from "@tonconnect/ui-react";
 import {
   BLP_JETTON_MINTER,
   TGBTC_JETTON_MINTER,
 } from "../../../../../../consts";
+import { apiService } from "../../../../../../tonx";
+import s from "./HomePageTop.module.scss";
 
 export const HomePageTop = () => {
   const wallet = useTonWallet();
@@ -43,6 +43,35 @@ export const HomePageTop = () => {
 
     setInputValue(value);
   };
+
+  const apyValues = [
+    {
+      index: 1,
+      tab: "x1",
+      value: "1.15",
+    },
+    {
+      index: 2,
+      tab: "x2",
+      value: "2.3",
+    },
+    {
+      index: 3,
+      tab: "x3",
+      value: "3.45",
+    },
+    {
+      index: 4,
+      tab: "x4",
+      value: "4.6",
+    },
+    {
+      index: 5,
+      tab: "x5",
+      value: "5.75",
+    },
+  ];
+  const [currentApyValue, setCurrentApyValue] = useState(2);
 
   useEffect(() => {
     const fetchBalances = async () => {
@@ -149,38 +178,29 @@ export const HomePageTop = () => {
         {currentTabNum === 1 && (
           <div className={s.block_x_wrapper}>
             <div className={s.block_x}>
-              <div className={clsx(s.block_x_item, s.active)}>
-                <div className={s.block_x_item_dot}>
-                  <div className={s.block_x_item_text}>X1</div>
+              {apyValues.map((item, i) => (
+                <div
+                  className={clsx(
+                    s.block_x_item,
+                    currentApyValue > i && s.active
+                  )}
+                >
+                  <div
+                    className={s.block_x_item_dot}
+                    onClick={() => {
+                      setCurrentApyValue(item.index);
+                    }}
+                  >
+                    <div className={s.block_x_item_text}>{item.tab}</div>
+                  </div>
+                  <div className={s.block_x_item_line}></div>
                 </div>
-                <div className={s.block_x_item_line}></div>
-              </div>
-              <div className={clsx(s.block_x_item, s.active)}>
-                <div className={s.block_x_item_dot}>
-                  <div className={s.block_x_item_text}>X2</div>
-                </div>
-                <div className={s.block_x_item_line}></div>
-              </div>
-              <div className={s.block_x_item}>
-                <div className={s.block_x_item_dot}>
-                  <div className={s.block_x_item_text}>X3</div>
-                </div>
-                <div className={s.block_x_item_line}></div>
-              </div>
-              <div className={s.block_x_item}>
-                <div className={s.block_x_item_dot}>
-                  <div className={s.block_x_item_text}>X4</div>
-                </div>
-                <div className={s.block_x_item_line}></div>
-              </div>
-              <div className={s.block_x_item}>
-                <div className={s.block_x_item_dot}>
-                  <div className={s.block_x_item_text}>X5</div>
-                </div>
-                <div className={s.block_x_item_line}></div>
-              </div>
+              ))}
             </div>
-            <div className={s.block_apy}>APY 3.53%</div>
+            <div className={s.block_apy}>
+              APY{" "}
+              {apyValues.find((item) => item.index === currentApyValue)?.value}%
+            </div>
           </div>
         )}
         {currentTabNum === 1 && (

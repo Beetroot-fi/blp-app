@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from "axios";
+import { JettonWallet } from "./interfaces";
 
 const api: AxiosInstance = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -7,6 +8,22 @@ const api: AxiosInstance = axios.create({
         'content-type': 'application/json',
     },
 });
+
+const EMPTY_JETTON_WALLET: JettonWallet = {
+    balance: "0",
+    jetton: {
+        address: "",
+        name: "",
+        symbol: "",
+        decimals: 0,
+        image: "",
+    },
+    wallet_address: {
+        address: "",
+        is_scam: false,
+        is_wallet: false,
+    },
+};
 
 export const apiService = {
     getJettonBalance: async (walletAddress: string, jettonMinterAddress: string) => {
@@ -23,7 +40,7 @@ export const apiService = {
 
             return response.data.result;
         } catch (error) {
-            throw error;
+            return EMPTY_JETTON_WALLET;;
         }
     },
 };

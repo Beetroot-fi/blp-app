@@ -1,0 +1,7 @@
+{
+    "name": "tgBTC Beetroot LP",
+    "description": "tgBTC locked in Beetroot vault",
+    "symbol": "tgBTC-BLP",
+    "decimals": 8,
+    "image": "https://blp.beetroot.finance/logo.png"
+}

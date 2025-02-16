@@ -1,6 +1,6 @@
-import { useTonWallet } from "@tonconnect/ui-react";
+import { useTonConnectUI, useTonWallet } from "@tonconnect/ui-react";
 import clsx from "clsx";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Btn from "../../../../../../components/Btn/Btn";
 import { InfoIcon } from "../../../../../../components/Icons/InfoIcon";
 import {
@@ -9,14 +9,24 @@ import {
 } from "../../../../../../consts";
 import { apiService } from "../../../../../../tonx";
 import s from "./HomePageTop.module.scss";
+import { JettonWallet } from "../../../../../../interfaces";
+import {
+  buildJettonBurnBody,
+  buildJettonTransferBody,
+} from "../../../../../../methods/jettonUtils";
+import { Address, beginCell, toNano } from "@ton/core";
 
 export const HomePageTop = () => {
   const wallet = useTonWallet();
   const [currentTabNum, setCurrentTabNum] = useState(1);
   const tabs = ["Withdraw", "Deposit"];
-  const [tgBTCbalance, setTGBTCbalance] = useState<number>(0);
-  const [blpBalance, setBlpBalance] = useState<number>(0);
+  const [tgBTCJettonWallet, setTGBTCJettonWallet] =
+    useState<JettonWallet | null>(null);
+  const [blpJettonWallet, setBlpJettonWallet] = useState<JettonWallet | null>(
+    null
+  );
   const [inputValue, setInputValue] = useState<string | number>("");
+  const [tonConnectUi] = useTonConnectUI();
   const [currentPercentOfBalance, setCurrentPercentOfBalance] = useState<
     undefined | number
   >(0);
@@ -32,7 +42,12 @@ export const HomePageTop = () => {
       return "You need to have at least 1 USDT for deposit";
   }, [inputValue]);
 
-  const balance = currentTabNum === 0 ? blpBalance : tgBTCbalance;
+  const balance =
+    currentTabNum === 1
+      ? Number(tgBTCJettonWallet?.balance || 0) / 1e8
+      : Number(blpJettonWallet?.balance || 0) / 1e8;
+
+  const buttonText = currentTabNum === 0 ? "Withdraw" : "Deposit";
 
   const onInputChange = (e: any) => {
     const { value } = e.target;
@@ -71,35 +86,98 @@ export const HomePageTop = () => {
       value: "5.75",
     },
   ];
-  const [currentApyValue, setCurrentApyValue] = useState(2);
+  const [currentApyIndex, setCurrentApyIndex] = useState(2);
+  const currentApyObject = apyValues.find(
+    (item) => item.index === currentApyIndex
+  );
+
+  const fetchBalances = async () => {
+    try {
+      if (!wallet || !wallet.account?.address) {
+        return;
+      }
+
+      const address = wallet.account.address;
+
+      const [tgBTC, blp] = await Promise.all([
+        apiService.getJettonBalance(address, TGBTC_JETTON_MINTER),
+        apiService.getJettonBalance(address, BLP_JETTON_MINTER),
+      ]);
+
+      setTGBTCJettonWallet(tgBTC);
+      setBlpJettonWallet(blp);
+    } catch (error) {
+      throw error;
+    }
+  };
 
   useEffect(() => {
-    const fetchBalances = async () => {
-      try {
-        if (!wallet || !wallet.account?.address) {
-          return;
-        }
-
-        const address = wallet.account.address;
-
-        const [tgBTC, blp] = await Promise.all([
-          apiService.getJettonBalance(address, TGBTC_JETTON_MINTER),
-          apiService.getJettonBalance(address, BLP_JETTON_MINTER),
-        ]);
-
-        setTGBTCbalance(Number(tgBTC) / 1e8);
-        setBlpBalance(Number(blp) / 1e8);
-      } catch (error) {
-        throw error;
-      }
-    };
-
     fetchBalances();
+  }, [wallet]);
 
+  useEffect(() => {
     if (balance) {
       setCurrentPercentOfBalance((Number(inputValue) / balance) * 100);
     }
-  }, [wallet, inputValue, currentTabNum]);
+  }, [inputValue]);
+
+  const opType = useMemo(
+    () => (currentTabNum === 1 ? "deposit" : "withdraw"),
+    [currentTabNum]
+  );
+
+  const onClick = useCallback(async () => {
+    if (error || !wallet?.account.address) return;
+
+    const isDeposit = opType === "deposit";
+
+    const jettonWallet = isDeposit ? tgBTCJettonWallet : blpJettonWallet;
+    if (!jettonWallet?.wallet_address.address) return;
+
+    const body = isDeposit
+      ? buildJettonTransferBody(
+          0n,
+          BigInt(Number(inputValue) * 1e8),
+          Address.parseRaw(jettonWallet.wallet_address.address),
+          Address.parseRaw(wallet.account.address),
+          toNano("0.15"),
+          beginCell()
+            .storeUint(Math.round(Number(currentApyObject?.value) * 1e2), 10)
+            .endCell()
+        )
+      : buildJettonBurnBody(
+          0n,
+          BigInt(Number(inputValue) * 1e8),
+          Address.parseRaw(wallet.account.address)
+        );
+
+    const destination = jettonWallet.wallet_address.address;
+    const amount = isDeposit ? toNano("0.2") : toNano("0.05");
+
+    try {
+      await tonConnectUi.sendTransaction({
+        messages: [
+          {
+            address: destination,
+            amount: amount.toString(),
+            payload: body.toBoc().toString("base64"),
+          },
+        ],
+        validUntil: Date.now() + 5 * 60 * 1000,
+      });
+    } catch (err) {
+      throw err;
+    }
+  }, [
+    error,
+    wallet,
+    inputValue,
+    currentApyObject,
+    opType,
+    tgBTCJettonWallet,
+    blpJettonWallet,
+    tonConnectUi,
+  ]);
 
   return (
     <div className={s.wrapper}>
@@ -143,7 +221,7 @@ export const HomePageTop = () => {
         )}
         <div className={clsx(s.block_pult, currentTabNum === 1 && s.jcsb)}>
           {currentTabNum === 1 && (
-            <div className={s.block_pult_text}>Swap fee: 1 USDT</div>
+            <div className={s.block_pult_text}>Deposit fee: 1 USDT</div>
           )}
           <div className={s.block_btns}>
             <div
@@ -182,13 +260,13 @@ export const HomePageTop = () => {
                 <div
                   className={clsx(
                     s.block_x_item,
-                    currentApyValue > i && s.active
+                    currentApyIndex > i && s.active
                   )}
                 >
                   <div
                     className={s.block_x_item_dot}
                     onClick={() => {
-                      setCurrentApyValue(item.index);
+                      setCurrentApyIndex(item.index);
                     }}
                   >
                     <div className={s.block_x_item_text}>{item.tab}</div>
@@ -197,10 +275,7 @@ export const HomePageTop = () => {
                 </div>
               ))}
             </div>
-            <div className={s.block_apy}>
-              APY{" "}
-              {apyValues.find((item) => item.index === currentApyValue)?.value}%
-            </div>
+            <div className={s.block_apy}>APY {currentApyObject?.value}%</div>
           </div>
         )}
         {currentTabNum === 1 && (
@@ -210,8 +285,8 @@ export const HomePageTop = () => {
         )}
       </div>
       <div className={s.btn}>
-        <Btn type="pink" className={s.btn} disabled={error}>
-          Withdraw
+        <Btn type="pink" className={s.btn} disabled={error} onClick={onClick}>
+          {buttonText}
         </Btn>
       </div>
     </div>

@@ -137,8 +137,8 @@ export const HomePageTop = () => {
     const body = isDeposit
       ? buildJettonTransferBody(
           0n,
-          BigInt(Number(inputValue) * 1e8),
-          Address.parseRaw(jettonWallet.wallet_address.address),
+          BigInt(Math.round(Number(inputValue) * 1e8)),
+          Address.parse(BLP_JETTON_MINTER),
           Address.parseRaw(wallet.account.address),
           toNano("0.15"),
           beginCell()
@@ -147,12 +147,12 @@ export const HomePageTop = () => {
         )
       : buildJettonBurnBody(
           0n,
-          BigInt(Number(inputValue) * 1e8),
+          BigInt(Math.round(Number(inputValue) * 1e8)),
           Address.parseRaw(wallet.account.address)
         );
 
     const destination = jettonWallet.wallet_address.address;
-    const amount = isDeposit ? toNano("0.2") : toNano("0.05");
+    const amount = isDeposit ? toNano("0.2") : toNano("0.1");
 
     try {
       await tonConnectUi.sendTransaction({

@@ -21,9 +21,9 @@ export const apiService = {
                 }
             });
 
-            return response.data.result.balance;
+            return response.data.result;
         } catch (error) {
             throw error;
         }
-    }
+    },
 };

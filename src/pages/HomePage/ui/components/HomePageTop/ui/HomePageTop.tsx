@@ -1,3 +1,4 @@
+import { Address, beginCell, toNano } from "@ton/core";
 import { useTonConnectUI, useTonWallet } from "@tonconnect/ui-react";
 import clsx from "clsx";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -7,14 +8,13 @@ import {
   BLP_JETTON_MINTER,
   TGBTC_JETTON_MINTER,
 } from "../../../../../../consts";
-import { apiService } from "../../../../../../tonx";
-import s from "./HomePageTop.module.scss";
 import { JettonWallet } from "../../../../../../interfaces";
 import {
   buildJettonBurnBody,
   buildJettonTransferBody,
 } from "../../../../../../methods/jettonUtils";
-import { Address, beginCell, toNano } from "@ton/core";
+import { apiService } from "../../../../../../tonx";
+import s from "./HomePageTop.module.scss";
 
 export const HomePageTop = () => {
   const wallet = useTonWallet();
@@ -30,11 +30,17 @@ export const HomePageTop = () => {
   const [currentPercentOfBalance, setCurrentPercentOfBalance] = useState<
     undefined | number
   >(0);
-  const error = useMemo(() => {
-    return inputValue !== "" && Number(inputValue) < 0.000002;
-  }, [inputValue]);
+
+  const balance =
+    currentTabNum === 1
+      ? Number(tgBTCJettonWallet?.balance || 0) / 1e8
+      : Number(blpJettonWallet?.balance || 0) / 1e8;
 
   const errorText = useMemo(() => {
+    if (Number(inputValue) > balance) {
+      return "Not enough balance";
+    }
+
     if (Number(inputValue) < 0.000001)
       return "the deposit must be more than 0.000002 TGBTC";
 
@@ -42,10 +48,12 @@ export const HomePageTop = () => {
       return "You need to have at least 1 USDT for deposit";
   }, [inputValue]);
 
-  const balance =
-    currentTabNum === 1
-      ? Number(tgBTCJettonWallet?.balance || 0) / 1e8
-      : Number(blpJettonWallet?.balance || 0) / 1e8;
+  const error = useMemo(() => {
+    return (
+      (inputValue !== "" && Number(inputValue) < 0.000002) ||
+      Number(inputValue) > balance
+    );
+  }, [inputValue]);
 
   const buttonText = currentTabNum === 0 ? "Withdraw" : "Deposit";
 
@@ -127,7 +135,8 @@ export const HomePageTop = () => {
   );
 
   const onClick = useCallback(async () => {
-    if (error || !wallet?.account.address) return;
+    if (!inputValue || error || !wallet?.account.address) return;
+    alert(123);
 
     const isDeposit = opType === "deposit";
 

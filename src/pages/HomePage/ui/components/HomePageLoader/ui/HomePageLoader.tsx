@@ -37,7 +37,7 @@ export const HomePageLoader: React.FC<Props> = ({ setShowLoader }) => {
       )}
       <div className={s.inner}>
         <div className={s.img}>
-          <img src="/logo.png" alt="" />
+          <img src="/beetroot-logo.png" alt="" />
         </div>
         <div className={s.title}>BEETROOT</div>
         <div className={s.subtitle}>farm yield easily</div>

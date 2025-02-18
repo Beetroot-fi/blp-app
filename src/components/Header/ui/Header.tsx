@@ -10,7 +10,7 @@ export const Header = () => {
     <HeaderStoreProvider store={headerStore}>
       <div className={s.wrapper}>
         <div className={s.logo}>
-          <img src="/logo.png" alt="" />
+          <img src="/beetroot-logo.png" alt="" />
           <p>
             <span>BEETROOT</span>
             <span>finance</span>
